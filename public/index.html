@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Stock Broker Client Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Chart.js for graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-bar">
+      <div class="logo">Broker<span>View</span></div>
+      <div class="user-info" id="user-info"></div>
+    </header>
+
+    <main>
+      <!-- LOGIN SECTION (default visible) -->
+      <section id="login-section" class="card">
+        <h1>Sign in to your account</h1>
+        <p class="subtitle">
+          Use your email and password to access your stock dashboard.
+        </p>
+
+        <form id="auth-form">
+          <label for="email">Email address</label>
+          <input
+            type="email"
+            id="email"
+            required
+            placeholder="you@example.com"
+            autocomplete="off"
+          />
+
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            required
+            placeholder="********"
+            autocomplete="off"
+          />
+
+          <!-- CAPTCHA -->
+          <label for="captcha-input">Enter the characters shown below</label>
+          <div class="captcha-row">
+            <canvas
+              id="captcha-canvas"
+              width="150"
+              height="50"
+              class="captcha-canvas"
+            ></canvas>
+            <button type="button" id="refresh-captcha" class="link-button captcha-refresh">
+              Refresh
+            </button>
+          </div>
+          <input
+            type="text"
+            id="captcha-input"
+            required
+            placeholder="Enter captcha"
+          />
+
+          <!-- Primary Login button -->
+          <button type="submit" id="login-btn">
+            Login
+          </button>
+
+          <!-- Text under login: create account -->
+          <p class="auth-helper">
+            <span>Don’t have an account?</span>
+            <button type="button" id="show-register" class="link-button">
+              Create account
+            </button>
+          </p>
+
+          <p id="auth-message" class="auth-message"></p>
+        </form>
+      </section>
+
+      <!-- REGISTER SECTION (hidden initially) -->
+      <section id="register-section" class="card hidden">
+        <h1>Create your account</h1>
+        <p class="subtitle">Enter your details to register.</p>
+
+        <form id="register-form">
+          <label for="reg-firstname">First Name</label>
+          <input
+            type="text"
+            id="reg-firstname"
+            required
+            placeholder="John"
+          />
+
+          <label for="reg-lastname">Last Name</label>
+          <input
+            type="text"
+            id="reg-lastname"
+            required
+            placeholder="Doe"
+          />
+
+          <label for="reg-email">Email address</label>
+          <input
+            type="email"
+            id="reg-email"
+            required
+            placeholder="you@example.com"
+          />
+
+          <label for="reg-password">Password</label>
+          <input
+            type="password"
+            id="reg-password"
+            required
+            placeholder="********"
+          />
+
+          <button type="submit" id="register-btn">
+            Create Account
+          </button>
+
+          <p class="auth-helper">
+            <span>Already have an account?</span>
+            <button type="button" id="show-login" class="link-button">
+              Login
+            </button>
+          </p>
+
+          <p id="register-message" class="auth-message"></p>
+        </form>
+      </section>
+
+      <!-- DASHBOARD SECTION (visible after login) -->
+      <section id="dashboard-section" class="dashboard hidden">
+        <div class="dashboard-header">
+          <div>
+            <h1>Stock Dashboard</h1>
+            <p class="subtitle">
+              Subscribe to stocks, view live prices and see price history graphs.
+            </p>
+          </div>
+          <div class="status">
+            <span class="dot" id="socket-status"></span>
+            <span id="socket-status-text">Connecting...</span>
+          </div>
+        </div>
+
+        <div class="layout">
+          <!-- LEFT: SUBSCRIPTIONS -->
+          <aside class="card">
+            <h2>Subscribe to Stocks</h2>
+            <p class="subtitle">Choose from the supported tickers:</p>
+            <form id="subscription-form">
+              <label>
+                <input type="checkbox" value="GOOG" />
+                GOOG (Alphabet)
+              </label>
+              <label>
+                <input type="checkbox" value="TSLA" />
+                TSLA (Tesla)
+              </label>
+              <label>
+                <input type="checkbox" value="AMZN" />
+                AMZN (Amazon)
+              </label>
+              <label>
+                <input type="checkbox" value="META" />
+                META (Meta)
+              </label>
+              <label>
+                <input type="checkbox" value="NVDA" />
+                NVDA (NVIDIA)
+              </label>
+            </form>
+          </aside>
+
+          <!-- RIGHT: TABLE -->
+          <section class="card">
+            <div class="table-header">
+              <h2>Your Subscribed Stocks</h2>
+              <span id="last-updated">Last updated: --</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Ticker</th>
+                  <th>Price (USD)</th>
+                  <th>Change (1s)</th>
+                </tr>
+              </thead>
+              <tbody id="stocks-body">
+                <tr>
+                  <td colspan="3" class="empty-state">
+                    Select one or more stocks on the left to start streaming
+                    prices.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+
+        <!-- GRAPH SECTION -->
+        <section class="card chart-card hidden" id="chart-section">
+          <div class="chart-header">
+            <h2>Price History</h2>
+            <select id="chart-ticker-select"></select>
+          </div>
+          <canvas id="price-chart" height="120"></canvas>
+        </section>
+
+        <!-- PRICE ALERTS SECTION -->
+        <section class="card alerts-card" id="alerts-section">
+          <div class="alerts-header">
+            <h2>Price Alerts</h2>
+            <p class="subtitle">
+              Create alerts to be notified when a stock crosses a price.
+            </p>
+          </div>
+
+          <form id="alerts-form" class="alerts-form">
+            <div class="alerts-row">
+              <div class="field">
+                <label for="alerts-ticker">Ticker</label>
+                <select id="alerts-ticker"></select>
+              </div>
+
+              <div class="field">
+                <label for="alerts-direction">Condition</label>
+                <select id="alerts-direction">
+                  <option value="above">Above</option>
+                  <option value="below">Below</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="alerts-price">Price</label>
+                <input
+                  type="number"
+                  id="alerts-price"
+                  step="0.01"
+                  min="0"
+                  placeholder="e.g. 250.00"
+                  required
+                />
+              </div>
+
+              <div class="field">
+                <label>&nbsp;</label>
+                <button type="submit" class="alerts-add-btn">Add Alert</button>
+              </div>
+            </div>
+          </form>
+
+          <div class="alerts-list-wrapper">
+            <h3 class="alerts-subtitle">Active Alerts</h3>
+            <ul id="alerts-list" class="alerts-list">
+              <li class="alerts-empty">No alerts yet. Create one above.</li>
+            </ul>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <footer>
+      Demo only – random prices updated every second, not real market data.
+    </footer>
+  </div>
+
+  <!-- Toast notifications -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Socket.IO client library -->
+  <script src="/socket.io/socket.io.js"></script>
+  <!-- Our client-side logic -->
+  <script src="client.js"></script>
+</body>
+</html>
