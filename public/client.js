@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const socket = io("https://YOUR-RENDER-BACKEND.onrender.com", {
+  const socket = io("https://stock-dashboard-sth3.onrender.com", {
   transports: ["websocket"]
 });
 

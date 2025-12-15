@@ -5,7 +5,6 @@ const { Server } = require('socket.io');
 const app = express();
 const server = http.createServer(app);
 
-// IMPORTANT: allow Netlify (different domain) to connect
 const io = new Server(server, {
   cors: {
     origin: "*",
@@ -15,25 +14,23 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
-// Supported stocks
 const SUPPORTED_STOCKS = ['GOOG', 'TSLA', 'AMZN', 'META', 'NVDA'];
 
 // In-memory accounts: email -> { password, firstName, lastName, subscriptions: [] }
 const accounts = {};
 
-// In-memory stock prices
+// Random starting prices
 let stockPrices = {};
 SUPPORTED_STOCKS.forEach((ticker) => {
   stockPrices[ticker] = 100 + Math.random() * 1000;
 });
 
-// Logged-in users by socket.id
+// socket.id -> session
 const users = {};
 
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
-  // Register
   socket.on('register', (data, callback) => {
     try {
       const email = String(data.email || '').toLowerCase().trim();
@@ -55,9 +52,13 @@ io.on('connection', (socket) => {
         });
       }
 
-      accounts[email] = { password, firstName, lastName, subscriptions: [] };
+      accounts[email] = {
+        password,
+        firstName,
+        lastName,
+        subscriptions: []
+      };
 
-      console.log(`Registered new account: ${email}`);
       return callback?.({
         success: true,
         message: 'Registration successful. Please login.'
@@ -68,7 +69,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Login
   socket.on('login', (data, callback) => {
     try {
       const email = String(data.email || '').toLowerCase().trim();
@@ -90,10 +90,7 @@ io.on('connection', (socket) => {
       }
 
       if (account.password !== password) {
-        return callback?.({
-          success: false,
-          error: 'Invalid password.'
-        });
+        return callback?.({ success: false, error: 'Invalid password.' });
       }
 
       const subs = Array.isArray(account.subscriptions) ? account.subscriptions : [];
@@ -104,8 +101,6 @@ io.on('connection', (socket) => {
         lastName: account.lastName,
         subscriptions: new Set(subs)
       };
-
-      console.log(`User logged in: ${email} (${socket.id})`);
 
       return callback?.({
         success: true,
@@ -121,7 +116,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Subscribe
   socket.on('subscribe', (ticker) => {
     const user = users[socket.id];
     if (!user) return;
@@ -138,7 +132,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Unsubscribe
   socket.on('unsubscribe', (ticker) => {
     const user = users[socket.id];
     if (!user) return;
@@ -159,7 +152,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// Price update loop (every 1 second)
+// Price update loop (every second)
 setInterval(() => {
   SUPPORTED_STOCKS.forEach((ticker) => {
     const change = (Math.random() - 0.5) * 5;
