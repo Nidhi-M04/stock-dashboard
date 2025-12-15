@@ -23,7 +23,7 @@
           Use your email and password to access your stock dashboard.
         </p>
 
-        <form id="auth-form">
+        <form id="auth-form" autocomplete="off">
           <label for="email">Email address</label>
           <input
             type="email"
@@ -50,6 +50,7 @@
               width="150"
               height="50"
               class="captcha-canvas"
+              aria-label="captcha"
             ></canvas>
             <button type="button" id="refresh-captcha" class="link-button captcha-refresh">
               Refresh
@@ -60,6 +61,7 @@
             id="captcha-input"
             required
             placeholder="Enter captcha"
+            autocomplete="off"
           />
 
           <!-- Primary Login button -->
@@ -84,13 +86,14 @@
         <h1>Create your account</h1>
         <p class="subtitle">Enter your details to register.</p>
 
-        <form id="register-form">
+        <form id="register-form" autocomplete="off">
           <label for="reg-firstname">First Name</label>
           <input
             type="text"
             id="reg-firstname"
             required
             placeholder="John"
+            autocomplete="off"
           />
 
           <label for="reg-lastname">Last Name</label>
@@ -99,6 +102,7 @@
             id="reg-lastname"
             required
             placeholder="Doe"
+            autocomplete="off"
           />
 
           <label for="reg-email">Email address</label>
@@ -107,6 +111,7 @@
             id="reg-email"
             required
             placeholder="you@example.com"
+            autocomplete="off"
           />
 
           <label for="reg-password">Password</label>
@@ -115,6 +120,7 @@
             id="reg-password"
             required
             placeholder="********"
+            autocomplete="off"
           />
 
           <button type="submit" id="register-btn">
@@ -272,8 +278,9 @@
   <!-- Toast notifications -->
   <div id="toast-container" class="toast-container"></div>
 
-  <!-- Socket.IO client library -->
-  <script src="/socket.io/socket.io.js"></script>
+  <!-- Socket.IO client library (CDN for Netlify hosting) -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
   <!-- Our client-side logic -->
   <script src="client.js"></script>
 </body>
